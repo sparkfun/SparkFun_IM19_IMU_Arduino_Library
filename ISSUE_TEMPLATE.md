@@ -9,7 +9,7 @@ Describe your issue here. If you reference a datasheet please specify which one 
 * Are there any additional details that may help us help you?
 
 ### Steps to reproduce
-Tell us how to reproduce this issue. Please post stripped down example code demonstrating your issue.
+Tell us how to reproduce this issue. Please post a stripped down example code demonstrating your issue.
 
 ### Expected behavior
 Tell us what should happen
