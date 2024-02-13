@@ -13,8 +13,8 @@
   Lesser General Public License for more details.
 */
 
-#include "SparkFun_IM19_IMU_Arduino_Library.h"
 #include "Arduino.h"
+#include "SparkFun_IM19_IMU_Arduino_Library.h"
 
 IM19_PARSE_STATE im19Parse = {IM19_PARSE_STATE_WAITING_FOR_SYNC1};
 
@@ -295,6 +295,25 @@ bool IM19::disableNaviUART1()
 {
     return (setNavi("UART1", "OFF"));
 }
+
+bool IM19::enableGnssUART1()
+{
+    return (setGnss("UART1", "ON"));
+}
+bool IM19::disableGnssUART1()
+{
+    return (setGnss("UART1", "OFF"));
+}
+
+bool IM19::enableMemsUART1()
+{
+    return (setMems("UART1", "ON"));
+}
+bool IM19::disableMemsUART1()
+{
+    return (setMems("UART1", "OFF"));
+}
+
 bool IM19::enableNaviUART3()
 {
     return (setNavi("UART3", "ON"));
@@ -310,6 +329,26 @@ bool IM19::setNavi(const char *port, const char *setting)
     // Put command together
     char command[50];
     snprintf(command, sizeof(command), "NAVI_OUTPUT=%s,%s", port, setting);
+
+    return (sendCommand(command));
+}
+
+// AT+GNSS_OUTPUT=UART1,OFF
+bool IM19::setGnss(const char *port, const char *setting)
+{
+    // Put command together
+    char command[50];
+    snprintf(command, sizeof(command), "GNSS_OUTPUT=%s,%s", port, setting);
+
+    return (sendCommand(command));
+}
+
+// AT+MEMS_OUTPUT=UART1,OFF
+bool IM19::setMems(const char *port, const char *setting)
+{
+    // Put command together
+    char command[50];
+    snprintf(command, sizeof(command), "MEMS_OUTPUT=%s,%s", port, setting);
 
     return (sendCommand(command));
 }
@@ -334,7 +373,7 @@ bool IM19::isReady()
     return (false);
 }
 
-// isTiltCorrecting - Bits 20 (RTK data)/19 (Time sync)/18 (PPS received)/17 (init complete) IMU is
+// isCorrecting - Bits 20 (RTK data)/19 (Time sync)/18 (PPS received)/17 (init complete) IMU is
 // outputting modified lat/lon/alt
 bool IM19::isCorrecting()
 {
@@ -479,7 +518,6 @@ Im19Result IM19::getFrame(uint8_t messageType, uint8_t *response, uint8_t *maxRe
 
         delay(1);
     }
-
 
     uint16_t sentenceCheckSum;
     memcpy(&sentenceCheckSum, &response[offsetCheckSum], sizeof(uint16_t));
@@ -730,7 +768,7 @@ void IM19::eomHandler(IM19_PARSE_STATE *parse)
 {
     if (parse->messageType == im19MessageTypeNavi)
     {
-        //debugPrintf("EOM NAVI handler");
+        // debugPrintf("EOM NAVI handler");
 
         IM19_CHECK_POINTER_VOID(packetNavi, initNavi); // Check that RAM has been allocated
 
@@ -756,7 +794,7 @@ void IM19::eomHandler(IM19_PARSE_STATE *parse)
     }
     else if (parse->messageType == im19MessageTypeGnss)
     {
-        //debugPrintf("EOM GNSS handler");
+        // debugPrintf("EOM GNSS handler");
 
         IM19_CHECK_POINTER_VOID(packetGnss, initGnss); // Check that RAM has been allocated
 
@@ -792,7 +830,7 @@ void IM19::eomHandler(IM19_PARSE_STATE *parse)
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // Allocate RAM for packet and initialize it
-bool IM19::initNavi()
+bool IM19::initNavi(uint8_t rate)
 {
     packetNavi = new IM19_NAVI_t; // Allocate RAM for the struct
     if (packetNavi == nullptr)
@@ -804,7 +842,7 @@ bool IM19::initNavi()
     //   packetNavi->callbackData = nullptr;
 
     // Start outputting Navi in Binary on this COM port
-    if (sendCommand("NAVI_OUTPUT=UART1,ON") == false)
+    if (setNavi("UART1", "ON") == false)
     {
         debugPrintf("Failed to start NAVI output");
         delete packetNavi;
@@ -814,7 +852,7 @@ bool IM19::initNavi()
 
     // Wait until first report is available
     lastUpdateNavi = 0;
-    uint16_t maxWait = 1100; //Must be at least as long as one report
+    uint16_t maxWait = (1000 / rate) + 100; // Wait for one response to come in
     unsigned long startTime = millis();
     while (1)
     {
@@ -834,7 +872,7 @@ bool IM19::initNavi()
 }
 
 // Allocate RAM for packet and initialize it
-bool IM19::initGnss()
+bool IM19::initGnss(uint8_t rate)
 {
     packetGnss = new IM19_GNSS_t; // Allocate RAM for the struct
     if (packetGnss == nullptr)
@@ -846,7 +884,7 @@ bool IM19::initGnss()
     //   packetGnss->callbackData = nullptr;
 
     // Start outputting Gnss in Binary on this COM port
-    if (sendCommand("GNSS_OUTPUT=UART1,ON") == false)
+    if (setGnss("UART1", "ON") == false)
     {
         debugPrintf("Tilt: Failed to start GNSS output");
         delete packetGnss;
@@ -856,7 +894,7 @@ bool IM19::initGnss()
 
     // Wait until first report is available
     lastUpdateGnss = 0;
-    uint16_t maxWait = 1100; //Must be at least as long as one report
+    uint16_t maxWait = (1000 / rate) + 100; // Wait for one response to come in
     unsigned long startTime = millis();
     while (1)
     {

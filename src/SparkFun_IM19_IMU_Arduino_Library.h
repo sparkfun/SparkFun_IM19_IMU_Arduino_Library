@@ -298,10 +298,10 @@ class IM19
     void parseSync5(IM19_PARSE_STATE *parse, uint8_t data);
     void eomHandler(IM19_PARSE_STATE *parse);
 
-    bool initNavi();
+    bool initNavi(uint8_t rate = 5);
     IM19_NAVI_t *packetNavi = nullptr;
 
-    bool initGnss();
+    bool initGnss(uint8_t rate = 5);
     IM19_GNSS_t *packetGnss = nullptr;
 
     uint16_t getNaviFreshLimitMs();
@@ -316,8 +316,16 @@ class IM19
 
     // Main helper functions
     bool setNavi(const char *port, const char *setting);
+    bool setGnss(const char *port, const char *setting);
+    bool setMems(const char *port, const char *setting);
+
     bool enableNaviUART1();
     bool disableNaviUART1();
+    bool enableGnssUART1();
+    bool disableGnssUART1();
+    bool enableMemsUART1();
+    bool disableMemsUART1();
+
     bool enableNaviUART3();
     bool disableNaviUART3();
 
