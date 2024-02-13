@@ -1,17 +1,8 @@
 /*
-  This is a library to read/write to external I2C EEPROMs.
-  It uses the same template system found in the Arduino
-  EEPROM library so you can use the same get() and put() functions.
+  This is a library to control IM19 GNSS tilt compensation sensors.
 
-  https://github.com/sparkfun/SparkFun_External_EEPROM_Arduino_Library
-  Best used with the Qwiic EEPROM: https://www.sparkfun.com/products/14764
-
-  Various external EEPROMs have various interface specs
-  (overall size, page size, write times, etc). This library works with
-  all types and allows the various settings to be set at runtime.
-
-  All read and write restrictions associated with pages are taken care of.
-  You can access the external memory as if it was contiguous.
+  https://github.com/sparkfun/SparkFun_IM19_IMU_Arduino_Library
+  Best used with the UM980 Breakout: https://www.sparkfun.com/products/23286
 
   Development environment specifics:
   Arduino IDE 1.8.x
@@ -23,53 +14,10 @@
 
 */
 
-/*
-  Commands covered in v1.1.10 doc
-  AT+SYSTEM_RESET - Reset system
-  AT+BOOT - Used for bootloading new firmware
-  AT+SAVE_ALL - Save current config to NVM
-  AT+GNSS_CARD=[HEMI | OEM | NOVTEL | UNICORE]
-  AT+AHRS=[ENABLE | DISABLE]
-  AT+ANT2=[ENABLE | DISABLE]
-  AT+READ_PARA=[SYSTEM | ALL]
-  AT+LOAD_DEFAULT
-  AT+AUTO_FIX=[ENABLE | DISABLE]
-  AT+MAG_AUTO_SAVE=[ENABLE | DISABLE]
-  AT+GYR_AUTO_SAVE=[ENABLE | DISABLE]
-  AT+ACC_AUTO_SAVE=[ENABLE | DISABLE]
-  AT+CLUB_VECTOR=[VALUE1],[VALUE2],[VALUE3] - Pole length
-  AT+NAVI_OUTPUT=[UART1 | UART 3], [ON | OFF] - Enable/disable tilt compensation
-  AT+MEMS_OUTPUT=[UART1 | UART 3], [ON | OFF]
-  AT+GNSS_OUTPUT=[UART1 | UART 3], [ON | OFF]
-  AT+LEVER_ARM=X,Y,Z - Product specific location of the IMU.
-  AT+CHECK_SYNC
-  AT+HIGH_RATE=[ENABLE | DISABLE]
-  AT+SET_ALL_PARA
-  AT+ACTIVATE_KEY=[KEY]
-  AT+ALIGN_VEL=1.0
-
-  Not in document
-  AT+GNSS_PORT=PHYSICAL_UART3   //Uses serial port 3 as the serial port for communication with GNSS
-  AT+WORK_MODE=152  //Configured as tilt measurement mode
-  AT+SET_PPS_EDGE=RISING/FALLING
-
-  Typical config:
-  AT+MAG_AUTO_SAVE=ENABLE
-  AT+NAVI_OUTPUT=UART1,ON
-  AT+LEVER_ARM=0.007,-0.035,-0.025
-  AT+CLUB_VECTOR=0.00,0.00,1.855
-  AT+GNSS_CARD=UNICORE
-  AT+HIGH_RATE=DISABLE
-  AT+SAVE_ALL
-*/
 #ifndef _SPARKFUN_IM19_IMU_ARDUINO_LIBRARY_H
 #define _SPARKFUN_IM19_IMU_ARDUINO_LIBRARY_H
 
 #include "Arduino.h"
-
-#if __has_include("SoftwareSerial.h")
-#include <SoftwareSerial.h>
-#endif
 
 #define IM19_CHECK_POINTER_BOOL(packetPointer, initPointer)                                                                 \
     {                                                                                                                  \
@@ -186,7 +134,6 @@ typedef struct
     //IM19_GNSS_data_t *callbackData;
 } IM19_GNSS_t;
 
-
 const uint8_t im19Sync1 = 'f';
 const uint8_t im19Sync2 = 'm';
 const uint8_t im19Sync3 = 'i';
@@ -262,11 +209,6 @@ class IM19
 
   protected:
     HardwareSerial *_hwSerialPort = nullptr;
-#if __has_include("SoftwareSerial.h")
-    SoftwareSerial *_swSerialPort = nullptr;
-#else
-    HardwareSerial *_swSerialPort = nullptr;
-#endif
 
   public:
     bool begin(HardwareSerial &serialPort);

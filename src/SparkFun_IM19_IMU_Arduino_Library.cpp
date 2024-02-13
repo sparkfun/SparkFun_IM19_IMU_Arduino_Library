@@ -2,7 +2,7 @@
   This is a library to control IM19 GNSS tilt compensation sensors.
 
   https://github.com/sparkfun/SparkFun_IM19_IMU_Arduino_Library
-  Best used with the UM980 Breakout: https://www.sparkfun.com/products/xxxxx
+  Best used with the UM980 Breakout: https://www.sparkfun.com/products/23286
 
   Development environment specifics:
   Arduino IDE 1.8.x
@@ -21,10 +21,8 @@ IM19_PARSE_STATE im19Parse = {IM19_PARSE_STATE_WAITING_FOR_SYNC1};
 bool IM19::begin(HardwareSerial &serialPort)
 {
     _hwSerialPort = &serialPort;
-    _swSerialPort = nullptr;
 
     // We assume the user has started the serial port with proper pins and baud rate prior to calling begin()
-    //_hwSerialPort->begin(115200);
 
     if (isConnected() == false)
     {
@@ -121,10 +119,6 @@ uint16_t IM19::serialAvailable()
     {
         return (_hwSerialPort->available());
     }
-    else if (_swSerialPort != nullptr)
-    {
-        return (_swSerialPort->available());
-    }
     return (0);
 }
 
@@ -133,10 +127,6 @@ uint8_t IM19::serialRead()
     if (_hwSerialPort != nullptr)
     {
         return (_hwSerialPort->read());
-    }
-    else if (_swSerialPort != nullptr)
-    {
-        return (_swSerialPort->read());
     }
     return (0);
 }
@@ -147,10 +137,6 @@ uint8_t IM19::serialPeek()
     {
         return (_hwSerialPort->peek());
     }
-    else if (_swSerialPort != nullptr)
-    {
-        return (_swSerialPort->peek());
-    }
     return (0);
 }
 
@@ -159,10 +145,6 @@ void IM19::serialPrintln(const char *command)
     if (_hwSerialPort != nullptr)
     {
         _hwSerialPort->println(command);
-    }
-    else if (_swSerialPort != nullptr)
-    {
-        _swSerialPort->println(command);
     }
 }
 
