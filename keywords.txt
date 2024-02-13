@@ -6,51 +6,105 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-ExternalEEPROM	KEYWORD1
+IM19	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-read	KEYWORD2
-write	KEYWORD2
 begin	KEYWORD2
 isConnected	KEYWORD2
-isBusy	KEYWORD2
-erase	KEYWORD2
 
-detectMemorySizeBytes	KEYWORD2
-setMemorySizeBytes	KEYWORD2
-getMemorySizeBytes	KEYWORD2
-setMemorySize	KEYWORD2
-getMemorySize	KEYWORD2
-length	KEYWORD2
+enableDebugging	KEYWORD2
+disableDebugging	KEYWORD2
 
-detectPageSizeBytes	KEYWORD2
-setPageSizeBytes	KEYWORD2
-getPageSizeBytes	KEYWORD2
-setPageSize	KEYWORD2
-getPageSize	KEYWORD2
+getFrame	KEYWORD2
+scanForStart	KEYWORD2
+sendString	KEYWORD2
+sendCommand	KEYWORD2
+serialAvailable	KEYWORD2
+serialRead	KEYWORD2
+serialPeek	KEYWORD2
+serialPrintln	KEYWORD2
+clearBuffer	KEYWORD2
 
-detectAddressBytes	KEYWORD2
-setAddressBytes	KEYWORD2
-getAddressBytes	KEYWORD2
+update	KEYWORD2
+updateOnce	KEYWORD2
 
-detectWriteTimeMs	KEYWORD2
-setWriteTimeMs	KEYWORD2
-getWriteTimeMs	KEYWORD2
-setPageWriteTime	KEYWORD2
-getPageWriteTime	KEYWORD2
+waitForSync1	KEYWORD2
+parseSync2	KEYWORD2
+parseSync3	KEYWORD2
+parseType	KEYWORD2
+parseData	KEYWORD2
+parseChecksum	KEYWORD2
+parseSync4	KEYWORD2
+parseSync5	KEYWORD2
+eomHandler	KEYWORD2
 
-enablePollForWriteComplete	KEYWORD2
-disablePollForWriteComplete	KEYWORD2
-get	KEYWORD2
-put	KEYWORD2
-setI2CBufferSize	KEYWORD2
-getI2CBufferSize	KEYWORD2
-putString	KEYWORD2
-getString	KEYWORD2
-detectMemorySizeBytes	KEYWORD2
+initNavi	KEYWORD2
+initGnss	KEYWORD2
+
+getNaviFreshLimitMs	KEYWORD2
+setNaviFreshLimitMs	KEYWORD2
+
+getNaviAge	KEYWORD2
+getGnssFreshLimitMs	KEYWORD2
+setGnssFreshLimitMs	KEYWORD2
+getGnssAge	KEYWORD2
+
+factoryReset	KEYWORD2
+saveConfiguration	KEYWORD2
+
+setNavi	KEYWORD2
+setGnss	KEYWORD2
+setMems	KEYWORD2
+
+enableNaviUART1	KEYWORD2
+disableNaviUART1	KEYWORD2
+enableGnssUART1	KEYWORD2
+disableGnssUART1	KEYWORD2
+enableMemsUART1	KEYWORD2
+disableMemsUART1	KEYWORD2
+enableNaviUART3	KEYWORD2
+disableNaviUART3	KEYWORD2
+
+getNaviTimestamp	KEYWORD2
+getNaviLatitude	KEYWORD2
+getNaviLongitude	KEYWORD2
+getNaviAltitude	KEYWORD2
+getNaviRollAngle	KEYWORD2
+getNaviPitchAngle	KEYWORD2
+getNaviHeading	KEYWORD2
+getNaviPositionAccuracy	KEYWORD2
+getNaviAccelZeroBiasX	KEYWORD2
+getNaviAccelZeroBiasY	KEYWORD2
+getNaviAccelZeroBiasZ	KEYWORD2
+getNaviGyroZeroBiasX	KEYWORD2
+getNaviGyroZeroBiasY	KEYWORD2
+getNaviGyroZeroBiasZ	KEYWORD2
+getNaviTemperature	KEYWORD2
+getNaviStatus	KEYWORD2
+getGnssTimestamp	KEYWORD2
+getGnssLatitude	KEYWORD2
+getGnssLongitude	KEYWORD2
+getGnssAltitude	KEYWORD2
+getGnssNorthboundSpeed	KEYWORD2
+getGnssEastboundSpeed	KEYWORD2
+getGnssDownwardSpeed	KEYWORD2
+getGnssNorthernPositionVariance	KEYWORD2
+getGnssEasternPositionVariance	KEYWORD2
+getGnssElevationVariance	KEYWORD2
+getGnssHRMS	KEYWORD2
+getGnssVRMS	KEYWORD2
+getGnssHDOP	KEYWORD2
+getGnssVDOP	KEYWORD2
+getGnssSatellitesInView	KEYWORD2
+getGnssSolutionState	KEYWORD2
+getGnssDifferentialAge	KEYWORD2
+
+isRtkFixed	KEYWORD2
+isReady	KEYWORD2
+isCorrecting	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
