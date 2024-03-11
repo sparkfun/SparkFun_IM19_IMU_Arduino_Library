@@ -307,7 +307,8 @@ class IM19
     uint8_t getGnssDifferentialAge();
 
     bool isRtkFixed(); //Check is GNSS is reporting as fixed. Requires "GNSS_OUTPUT=UART1,ON" during config.
-    bool isReady(); //IMU is online and ready for a shake, but is not outputting new lat/lon/alt
+    bool isReady(); //IMU is online and ready for a shake
+    bool isInitialized(); //IMU has been shaken, but is not yet outputting modified lat/lon/alt
     bool isCorrecting(); //IMU has been shaken and is outputting modified lat/lon/alt
     //bool isTiltError(); //Returns true when 
 };

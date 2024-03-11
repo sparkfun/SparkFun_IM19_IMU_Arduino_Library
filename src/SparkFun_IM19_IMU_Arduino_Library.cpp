@@ -355,8 +355,24 @@ bool IM19::isReady()
     return (false);
 }
 
-// isCorrecting - Bits 20 (RTK data)/19 (Time sync)/18 (PPS received)/17 (init complete) IMU is
-// outputting modified lat/lon/alt
+// isInitialized - Bits 13 (Init shaking 1)/14 (Init shaking 2)
+// User has started the tilt/shake process
+// Return true if device is only in this state. Return false once device isCorrecting.
+bool IM19::isInitialized()
+{
+    if (isReady() == false)
+        return (false);
+    
+    if(isCorrecting() == true)
+        return (false);
+
+    if ((getNaviStatus() & (1 << 13)))
+        return (true);
+    return (false);
+}
+
+// isCorrecting - Bits 20 (RTK data)/19 (Time sync)/18 (PPS received)/17 (init complete) 
+// IMU is outputting modified lat/lon/alt
 bool IM19::isCorrecting()
 {
     if (isReady() == false)
