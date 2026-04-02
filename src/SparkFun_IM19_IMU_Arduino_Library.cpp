@@ -34,17 +34,20 @@ bool IM19::begin(HardwareSerial &serialPort)
 
 // Query the device with 'MODE', expect OK response
 // Device may be booting and outputting other messages (ie, $devicename,COM3*65)
-// Try a few times
+// Testing shows that a the IM19 responds in approximate 2507ms.
+// Try twice quickly here, but leave the retry logic to the host.
 bool IM19::isConnected()
 {
-    for (int x = 0; x < 4; x++)
+    uint8_t maxTries = 2;
+    for (int x = 0; x < maxTries; x++)
     {
         debugPrintf("Sending disable Navi command."); // Response to query should start with OK
         if (disableNaviUART1() == true)
             return (true);
         debugPrintf("Failed to connect. Trying again.");
-        delay(1000 *
-              (x + 1)); // If the device has just been reset, it takes a few seconds before it can respond to commands
+
+        if (x < (maxTries - 1))
+            delay(250);
     }
     return (false);
 }
@@ -362,8 +365,8 @@ bool IM19::isInitialized()
 {
     if (isReady() == false)
         return (false);
-    
-    if(isCorrecting() == true)
+
+    if (isCorrecting() == true)
         return (false);
 
     if ((getNaviStatus() & (1 << 13)))
@@ -371,7 +374,7 @@ bool IM19::isInitialized()
     return (false);
 }
 
-// isCorrecting - Bits 20 (RTK data)/19 (Time sync)/18 (PPS received)/17 (init complete) 
+// isCorrecting - Bits 20 (RTK data)/19 (Time sync)/18 (PPS received)/17 (init complete)
 // IMU is outputting modified lat/lon/alt
 bool IM19::isCorrecting()
 {
