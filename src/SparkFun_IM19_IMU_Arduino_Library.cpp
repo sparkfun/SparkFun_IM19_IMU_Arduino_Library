@@ -388,7 +388,7 @@ bool IM19::isCorrecting()
 }
 
 // Given the start character to look for
-// Polls serial port until timout, or response received
+// Polls serial port until timeout, or response received
 // Returns OK if response is received with valid checksum
 // Response is stored in response[]
 // maxResponseLength length is updated to contain the length of the response
@@ -912,6 +912,367 @@ bool IM19::initGnss(uint8_t rate)
     }
     return (true);
 }
+
+// Extract token values like H2, B2.2, A11.4 as integer forms: 2, 22, 1140.
+static bool parseTokenVersion(const char *response, char token, int &versionNumber)
+{
+    versionNumber = 0;
+
+    const char *p = response;
+    while (*p != '\0')
+    {
+        if (*p == '_' && *(p + 1) == token)
+        {
+            p += 2;
+
+            long value = 0;
+            bool sawDigit = false;
+
+            while (*p != '\0')
+            {
+                if (*p >= '0' && *p <= '9')
+                {
+                    sawDigit = true;
+                    value = (value * 10) + (*p - '0');
+                    p++;
+                    continue;
+                }
+
+                if (*p == '.')
+                {
+                    p++;
+                    continue;
+                }
+
+                break;
+            }
+
+            if (sawDigit)
+            {
+                versionNumber = (int)value;
+                return true;
+            }
+        }
+        else
+        {
+            p++;
+        }
+    }
+
+    return false;
+}
+
+// Parse _A11.4 or _A11.4.1 into integer forms 1140 or 1141.
+static bool parseAppVersionNumber(const char *response, int &appVersion)
+{
+    appVersion = 0;
+
+    const char *aToken = strstr(response, "_A");
+    if (aToken == nullptr)
+        return false;
+
+    const char *p = aToken + 2;
+
+    char major[8] = {'\0'};
+    char minor[8] = {'\0'};
+    char patch[8] = "0";
+
+    size_t i = 0;
+    while ((*p >= '0' && *p <= '9') && i < sizeof(major) - 1)
+        major[i++] = *p++;
+    major[i] = '\0';
+    if (i == 0 || *p != '.')
+        return false;
+
+    p++;
+    i = 0;
+    while ((*p >= '0' && *p <= '9') && i < sizeof(minor) - 1)
+        minor[i++] = *p++;
+    minor[i] = '\0';
+    if (i == 0)
+        return false;
+
+    if (*p == '.')
+    {
+        p++;
+        i = 0;
+        while ((*p >= '0' && *p <= '9') && i < sizeof(patch) - 1)
+            patch[i++] = *p++;
+        patch[i] = '\0';
+        if (i == 0)
+            return false;
+    }
+
+    char combined[24] = {'\0'};
+    snprintf(combined, sizeof(combined), "%s%s%s", major, minor, patch);
+
+    appVersion = atoi(combined);
+    return appVersion > 0;
+}
+
+// Return true once IM19_Hx_By.z_Am.n[.p] is complete in the capture buffer.
+static bool hasCompleteVersionToken(const char *response)
+{
+    const char *p = strstr(response, "IM19_H");
+    if (p == nullptr)
+        return false;
+
+    p += strlen("IM19_H");
+
+    bool sawDigit = false;
+    while (*p >= '0' && *p <= '9')
+    {
+        sawDigit = true;
+        p++;
+    }
+    if (!sawDigit || *p != '_')
+        return false;
+
+    p++;
+    if (*p != 'B')
+        return false;
+    p++;
+
+    sawDigit = false;
+    while (*p >= '0' && *p <= '9')
+    {
+        sawDigit = true;
+        p++;
+    }
+    if (!sawDigit)
+        return false;
+    if (*p == '.')
+    {
+        p++;
+        sawDigit = false;
+        while (*p >= '0' && *p <= '9')
+        {
+            sawDigit = true;
+            p++;
+        }
+        if (!sawDigit)
+            return false;
+    }
+    if (*p != '_')
+        return false;
+
+    p++;
+    if (*p != 'A')
+        return false;
+    p++;
+
+    sawDigit = false;
+    while (*p >= '0' && *p <= '9')
+    {
+        sawDigit = true;
+        p++;
+    }
+    if (!sawDigit || *p != '.')
+        return false;
+
+    p++;
+    sawDigit = false;
+    while (*p >= '0' && *p <= '9')
+    {
+        sawDigit = true;
+        p++;
+    }
+    if (!sawDigit)
+        return false;
+
+    if (*p == '.')
+    {
+        p++;
+        sawDigit = false;
+        while (*p >= '0' && *p <= '9')
+        {
+            sawDigit = true;
+            p++;
+        }
+        if (!sawDigit)
+            return false;
+    }
+
+    // Do not declare complete until the A field is terminated.
+    return (*p != '\0' && !(*p >= '0' && *p <= '9') && *p != '.');
+}
+
+// Query the IM19 and collect a printable response buffer.
+bool IM19::queryVersionResponse(char *printableResponse, size_t responseCapacity)
+{
+    clearBuffer();
+    
+    serialPrintln("AT+VERSION");
+
+    uint32_t startTime = millis();
+    bool gotAnyData = false;
+    size_t responseLen = 0;
+
+    printableResponse[0] = '\0';
+
+    while (millis() - startTime < 2000)
+    {
+        while (serialAvailable())
+        {
+            char c = (char)serialRead();
+            gotAnyData = true;
+
+            // Keep only printable ASCII so binary tail bytes are ignored.
+            if (c >= 32 && c <= 126)
+            {
+                if (responseLen < responseCapacity - 1)
+                {
+                    printableResponse[responseLen++] = c;
+                }
+                else
+                {
+                    // Keep the newest printable bytes if response exceeds capacity.
+                    memmove(printableResponse, printableResponse + 1, responseCapacity - 2);
+                    printableResponse[responseCapacity - 2] = c;
+                    responseLen = responseCapacity - 1;
+                }
+
+                printableResponse[responseLen] = '\0';
+
+                if (hasCompleteVersionToken(printableResponse))
+                    return true;
+            }
+        }
+    }
+
+    return gotAnyData;
+}
+
+void IM19::releaseVersionResponse()
+{
+    if (gVersionResponse != nullptr)
+    {
+        free(gVersionResponse);
+        gVersionResponse = nullptr;
+    }
+}
+
+// Version responses look like this:
+// Version:IM19_H2_B2.2_A6.1_2eea4d4c024538bf5ed52
+// Version:IM19_H2_B2.2_A11.4_85119fbcee0bda310e65d
+// Version:IM19_H2_B2.2_A11.4.1_131b44ecee0bdad5670c7
+// H2: Hardware version
+// B2.2: Boot version
+// A11.1: Application firmware 11.1
+// We will return the integer forms of these values: 2, 22, 1110.
+bool IM19::getHardwareVersion(int &hardwareVersion)
+{
+    if (gVersionResponse == nullptr)
+    {
+        gVersionResponse = (char *)malloc(maxResponseLen);
+        if (gVersionResponse == nullptr)
+        {
+            hardwareVersion = 0;
+            return false;
+        }
+    }
+
+    bool gotResponse = queryVersionResponse(gVersionResponse, maxResponseLen);
+    bool gotVersion = false;
+    if (gotResponse)
+        gotVersion = parseTokenVersion(gVersionResponse, 'H', hardwareVersion);
+    else
+        hardwareVersion = 0;
+
+    releaseVersionResponse();
+    return gotVersion;
+}
+
+bool IM19::getBootVersion(int &bootVersion)
+{
+    if (gVersionResponse == nullptr)
+    {
+        gVersionResponse = (char *)malloc(maxResponseLen);
+        if (gVersionResponse == nullptr)
+        {
+            bootVersion = 0;
+            return false;
+        }
+    }
+
+    bool gotResponse = queryVersionResponse(gVersionResponse, maxResponseLen);
+    bool gotVersion = false;
+    if (gotResponse)
+        gotVersion = parseTokenVersion(gVersionResponse, 'B', bootVersion);
+    else
+        bootVersion = 0;
+
+    releaseVersionResponse();
+    return gotVersion;
+}
+
+bool IM19::getAppVersion(int &appVersion)
+{
+    if (gVersionResponse == nullptr)
+    {
+        gVersionResponse = (char *)malloc(maxResponseLen);
+        if (gVersionResponse == nullptr)
+        {
+            appVersion = 0;
+            return false;
+        }
+    }
+
+    bool gotResponse = queryVersionResponse(gVersionResponse, maxResponseLen);
+    bool gotVersion = false;
+    if (gotResponse)
+        gotVersion = parseAppVersionNumber(gVersionResponse, appVersion);
+    else
+        appVersion = 0;
+
+    releaseVersionResponse();
+    return gotVersion;
+}
+
+bool IM19::getVersion(char *versionString, size_t versionStringCapacity)
+{
+    if (versionString == nullptr || versionStringCapacity == 0)
+        return false;
+
+    versionString[0] = '\0';
+
+    if (gVersionResponse == nullptr)
+    {
+        gVersionResponse = (char *)malloc(maxResponseLen);
+        if (gVersionResponse == nullptr)
+            return false;
+    }
+
+    bool gotResponse = queryVersionResponse(gVersionResponse, maxResponseLen);
+    bool gotVersion = false;
+
+    if (gotResponse)
+    {
+        const char *start = strstr(gVersionResponse, "IM19_H");
+        if (start != nullptr)
+        {
+            const char *aToken = strstr(start, "_A");
+            if (aToken != nullptr)
+            {
+                const char *end = aToken + 2;
+                while ((*end >= '0' && *end <= '9') || *end == '.')
+                    end++;
+
+                size_t versionLen = (size_t)(end - start);
+                if (versionLen > 0 && versionLen < versionStringCapacity)
+                {
+                    memcpy(versionString, start, versionLen);
+                    versionString[versionLen] = '\0';
+                    gotVersion = true;
+                }
+            }
+        }
+    }
+
+    releaseVersionResponse();
+    return gotVersion;
+}
+
 
 double IM19::getNaviTimestamp()
 {

@@ -246,6 +246,16 @@ class IM19
     bool initGnss(uint8_t rate = 5);
     IM19_GNSS_t *packetGnss = nullptr;
 
+    static const size_t maxResponseLen = 128;
+    char *gVersionResponse = nullptr;
+    bool queryVersionResponse(char *printableResponse, size_t responseCapacity);
+    void releaseVersionResponse();
+
+    bool getHardwareVersion(int &hardwareVersion);
+    bool getBootVersion(int &bootVersion);
+    bool getAppVersion(int &appVersion);
+    bool getVersion(char *versionString, size_t versionStringCapacity);
+
     uint16_t getNaviFreshLimitMs();
     void setNaviFreshLimitMs(uint16_t staleAmountMs);
     uint32_t getNaviAge();
