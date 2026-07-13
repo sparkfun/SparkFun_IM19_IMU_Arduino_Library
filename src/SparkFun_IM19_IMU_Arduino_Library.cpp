@@ -1229,6 +1229,7 @@ bool IM19::getAppVersion(int &appVersion)
     return gotVersion;
 }
 
+// Returns something like 'IM19_H2_B2.2_A11.4'
 bool IM19::getVersion(char *versionString, size_t versionStringCapacity)
 {
     if (versionString == nullptr || versionStringCapacity == 0)
